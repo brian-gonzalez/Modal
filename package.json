@@ -1,6 +1,6 @@
 {
   "name": "@borngroup/born-modal",
-  "version": "1.8.5",
+  "version": "1.8.6",
   "description": "BORN Module to handle Modals. Provides callbacks and static methods to open, update, and close the modals",
   "main": "dist/born-modal.min.js",
   "scripts": {
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@bitbucket.org:danchill/born-packages.git"
+    "url": "https://github.com/brian-gonzalez/born-modal"
   },
   "keywords": [
     "modal",
