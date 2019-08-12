@@ -43,7 +43,7 @@ export default class Modal {
      * Creates the modal
      */
     _renderModal() {
-        this.modalEl            = createElWithAttrs(false, {'id': 'modal-' + this.options.modalID, 'class': this.options.modalClass});
+        this.modalEl            = createElWithAttrs(false, {'id': 'modal-' + this.options.modalID, 'class': this.options.modalClass, 'data-modal': true});
         this.modalContentEl     = createElWithAttrs(this.modalEl, {'class': this._modalContentClass, 'tabindex': '-1'});
 
         this.modalEl.modal = {};
@@ -83,7 +83,7 @@ export default class Modal {
 
                 if (Modal.getModal(this.options.modalID)) {
                     clearInterval(checkReady);
-                    
+
                     this.modalEl.modal.afterCreateCallback(this.modalEl);
 
                     if (this.options.allowCrossClose) {
@@ -142,6 +142,8 @@ export default class Modal {
             this.modal.container.classList.add('modal-shown');
         }
 
+        Modal.setFocusTrap(this);
+
         this.removeEventListener(whichTransition(), Modal.setModalShown);
     }
 
@@ -179,27 +181,6 @@ export default class Modal {
 
             targetModal.addEventListener(whichTransition(), Modal.setModalShown);
 
-            targetModal.modal.content.focus();
-            targetModal.modal.content.style.outline = 'none';
-
-            // let focusable = Modal.getFocusableElements(targetModal),
-            //  focusableFirst = focusable[0],
-            //  focusableLast = focusable[focusable.length - 1];
-
-            // focusableLast.addEventListener('keydown', function(evt){
-            //  if (evt.keyCode === 9 && !evt.shiftKey) {
-            //      console.log(focusableFirst);
-            //      focusableFirst.focus();
-            //  }
-            // });
-
-            // focusableFirst.addEventListener('keydown', function(evt){
-            //  if (evt.keyCode === 9 && evt.shiftKey) {
-            //      console.log(focusableLast);
-            //      focusableLast.focus();
-            //  }
-            // });
-
             Modal.toggleVideo(targetModal, 'play');
 
             //If option is specified, closes the modal after `timeOut`.
@@ -209,6 +190,39 @@ export default class Modal {
 
             //Run this when eerything's in place
             targetModal.modal.afterOpenCallback(targetModal);
+        }
+    }
+
+    /**
+     * Sets up a focus trap when a modal is open.
+     * @param {[type]} targetModal [description]
+     */
+    static setFocusTrap(targetModal) {
+        targetModal.modal.focusable = {};
+        targetModal.modal.focusable.list = Modal.getFocusableElements(targetModal);
+        targetModal.modal.focusable.first = targetModal.modal.focusable.list[0];
+        targetModal.modal.focusable.last = targetModal.modal.focusable.list[targetModal.modal.focusable.list.length - 1];
+
+        targetModal.modal.content.focus();
+        targetModal.modal.content.style.outline = 'none';
+
+        targetModal.modal.focusable.first.addEventListener('keydown', Modal.loopFocusableNode);
+        targetModal.modal.focusable.last.addEventListener('keydown', Modal.loopFocusableNode);
+    }
+
+    /**
+     * Detect wether the currently focused element is first or last within the modal.
+     * Then redirects the focus to the first or last element, depending on the user's tab action.
+     */
+    static loopFocusableNode(evt) {
+        let focusableObject = this.closest('[data-modal]').modal.focusable,
+            isFocusableLast = focusableObject.last === this,
+            focusableTarget = focusableObject[isFocusableLast ? 'first' : 'last'];
+
+        if (evt.keyCode === 9 && (isFocusableLast && !evt.shiftKey || !isFocusableLast && evt.shiftKey)) {
+            evt.preventDefault();
+
+            focusableTarget.focus();
         }
     }
 
@@ -396,7 +410,7 @@ export default class Modal {
         }
     }
 
-    // static getFocusableElements(targetModal) {
-    //  return targetModal.querySelectorAll('a, button, input:not([type="hidden"]), select, textarea');
-    // }
+    static getFocusableElements(targetModal) {
+     return targetModal.querySelectorAll('a, button, input:not([type="hidden"]), select, textarea');
+    }
 }

@@ -65,7 +65,7 @@ var Modal = function () {
         value: function _renderModal() {
             var _this = this;
 
-            this.modalEl = (0, _bornUtilities.createElWithAttrs)(false, { 'id': 'modal-' + this.options.modalID, 'class': this.options.modalClass });
+            this.modalEl = (0, _bornUtilities.createElWithAttrs)(false, { 'id': 'modal-' + this.options.modalID, 'class': this.options.modalClass, 'data-modal': true });
             this.modalContentEl = (0, _bornUtilities.createElWithAttrs)(this.modalEl, { 'class': this._modalContentClass, 'tabindex': '-1' });
 
             this.modalEl.modal = {};
@@ -168,6 +168,8 @@ var Modal = function () {
                 this.modal.container.classList.add('modal-shown');
             }
 
+            Modal.setFocusTrap(this);
+
             this.removeEventListener((0, _bornUtilities.whichTransition)(), Modal.setModalShown);
         }
 
@@ -208,27 +210,6 @@ var Modal = function () {
 
                 targetModal.addEventListener((0, _bornUtilities.whichTransition)(), Modal.setModalShown);
 
-                targetModal.modal.content.focus();
-                targetModal.modal.content.style.outline = 'none';
-
-                // let focusable = Modal.getFocusableElements(targetModal),
-                //  focusableFirst = focusable[0],
-                //  focusableLast = focusable[focusable.length - 1];
-
-                // focusableLast.addEventListener('keydown', function(evt){
-                //  if (evt.keyCode === 9 && !evt.shiftKey) {
-                //      console.log(focusableFirst);
-                //      focusableFirst.focus();
-                //  }
-                // });
-
-                // focusableFirst.addEventListener('keydown', function(evt){
-                //  if (evt.keyCode === 9 && evt.shiftKey) {
-                //      console.log(focusableLast);
-                //      focusableLast.focus();
-                //  }
-                // });
-
                 Modal.toggleVideo(targetModal, 'play');
 
                 //If option is specified, closes the modal after `timeOut`.
@@ -238,6 +219,45 @@ var Modal = function () {
 
                 //Run this when eerything's in place
                 targetModal.modal.afterOpenCallback(targetModal);
+            }
+        }
+
+        /**
+         * Sets up a focus trap when a modal is open.
+         * @param {[type]} targetModal [description]
+         */
+
+    }, {
+        key: 'setFocusTrap',
+        value: function setFocusTrap(targetModal) {
+            targetModal.modal.focusable = {};
+            targetModal.modal.focusable.list = Modal.getFocusableElements(targetModal);
+            targetModal.modal.focusable.first = targetModal.modal.focusable.list[0];
+            targetModal.modal.focusable.last = targetModal.modal.focusable.list[targetModal.modal.focusable.list.length - 1];
+
+            targetModal.modal.content.focus();
+            targetModal.modal.content.style.outline = 'none';
+
+            targetModal.modal.focusable.first.addEventListener('keydown', Modal.loopFocusableNode);
+            targetModal.modal.focusable.last.addEventListener('keydown', Modal.loopFocusableNode);
+        }
+
+        /**
+         * Detect wether the currently focused element is first or last within the modal.
+         * Then redirects the focus to the first or last element, depending on the user's tab action.
+         */
+
+    }, {
+        key: 'loopFocusableNode',
+        value: function loopFocusableNode(evt) {
+            var focusableObject = this.closest('[data-modal]').modal.focusable,
+                isFocusableLast = focusableObject.last === this,
+                focusableTarget = focusableObject[isFocusableLast ? 'first' : 'last'];
+
+            if (evt.keyCode === 9 && (isFocusableLast && !evt.shiftKey || !isFocusableLast && evt.shiftKey)) {
+                evt.preventDefault();
+
+                focusableTarget.focus();
             }
         }
 
@@ -453,11 +473,11 @@ var Modal = function () {
                         return false;
                     }
         }
-
-        // static getFocusableElements(targetModal) {
-        //  return targetModal.querySelectorAll('a, button, input:not([type="hidden"]), select, textarea');
-        // }
-
+    }, {
+        key: 'getFocusableElements',
+        value: function getFocusableElements(targetModal) {
+            return targetModal.querySelectorAll('a, button, input:not([type="hidden"]), select, textarea');
+        }
     }]);
 
     return Modal;
