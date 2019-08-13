@@ -1,5 +1,4 @@
-import $ from 'jquery';
-import {createElWithAttrs, whichTransition} from '@borngroup/born-utilities';
+import {createElWithAttrs, whichTransition, objectAssign} from '@borngroup/born-utilities';
 import {disableBodyScroll, enableBodyScroll, clearAllBodyScrollLocks} from 'body-scroll-lock';
 
 export default class Modal {
@@ -7,7 +6,7 @@ export default class Modal {
         this.options = options || {};
 
         //Options
-        this.options.modalID    = this.options.modalID || 'auto-' + Math.floor(new Date().getTime() * Math.random()).toString();
+        this.options.modalID = this.options.modalID || 'auto-' + Math.floor(new Date().getTime() * Math.random()).toString();
         this.options.modalClass = 'window-modal ' + (this.options.modalClass || '');
         this.options.openImmediately = this.options.hasOwnProperty('openImmediately') ? this.options.openImmediately : true;
         this.options.allowEscClose = this.options.hasOwnProperty('allowEscClose') ? this.options.allowEscClose : true;
@@ -18,23 +17,17 @@ export default class Modal {
 
         if (typeof this.options.container === 'string') {
             this.options.container = document.querySelector(this.options.container);
-        }
-
-        else if (this.options.container instanceof HTMLElement) {
+        } else if (this.options.container instanceof HTMLElement) {
             this.options.container = this.options.container;
-        }
-
-        else {
+        } else {
             this.options.container = document.querySelector('body');
         }
 
         //If modal doesn't exist, create it.
         if (!Modal.getModal(this.options.modalID)) {
             this._renderModal();
-        }
-
-        //Otherwise, just open it.
-        else {
+        } else {
+            //Otherwise, just open it.
             Modal.openModal(this.options.modalID);
         }
     }
@@ -43,17 +36,14 @@ export default class Modal {
      * Creates the modal
      */
     _renderModal() {
-        this.modalEl            = createElWithAttrs(false, {'id': 'modal-' + this.options.modalID, 'class': this.options.modalClass, 'data-modal': true});
-        this.modalContentEl     = createElWithAttrs(this.modalEl, {'class': this._modalContentClass, 'tabindex': '-1'});
+        this.modalEl = createElWithAttrs(false, {'id': 'modal-' + this.options.modalID, 'class': this.options.modalClass, 'data-modal': true});
 
         this.modalEl.modal = {};
 
-        this.modalEl.modal.content    = this.modalContentEl;
-        this.modalEl.modal.options    = this.options;
-        this.modalEl.modal.container  = this.options.container;
-        // this.modalEl.modal.playVideos = this.options.playVideos || false;
-        // this.modalEl.modal.overlayOthers = this.options.overlayOthers || false;
-        // this.modalEl.modal.closeAll = this.options.closeAll || false;
+        this.modalEl.modal.content = createElWithAttrs(this.modalEl, {'class': this._modalContentClass, 'tabindex': '-1'});
+        this.modalEl.modal.options = this.options;
+        this.modalEl.modal.container = this.options.container;
+
         this.modalEl.modal.keepAlive  = this.options.hasOwnProperty('keepAlive') ? this.options.keepAlive : true;
 
         //Callbacks
@@ -69,11 +59,10 @@ export default class Modal {
         this.update = this.modalEl.modal.update = Modal.updateModal.bind(Modal, this.modalEl);
 
         if (this.options.content) {
-            Modal.insertContent(this.modalContentEl, this.options.content);
+            Modal.insertContent(this.modalEl, this.options.content);
         }
 
-        //Using jQuery append cause sometimes the HTML might contain <script> tags
-        $(this.options.container).append(this.modalEl);
+        this.options.container.appendChild(this.modalEl);
 
         //Checks to see if modal has been succesfully inserted in DOM before attempting to open it.
         let checkReadyTries = 0,
@@ -87,12 +76,16 @@ export default class Modal {
                     this.modalEl.modal.afterCreateCallback(this.modalEl);
 
                     if (this.options.allowCrossClose) {
-                        Modal.insertCloseBtn(this.modalContentEl);
+                        Modal.insertCloseBtn(this.modalEl.modal.content);
                     }
 
                     if (this.options.openImmediately) {
                         Modal.openModal(this.modalEl);
                     }
+
+                    this.modalEl.modal.options.customAttributes = objectAssign(this.getCustomAttributes(this.modalEl), this.modalEl.modal.options.customAttributes);
+
+                    Modal.updateAttributes(this.modalEl);
                 }
 
                 else if (checkReadyTries >= 25) {
@@ -156,7 +149,7 @@ export default class Modal {
 
         targetModal = Modal.getModal(targetModal);
 
-        if(targetModal.modal.beforeOpenCallback(targetModal)) {
+        if (targetModal.modal.beforeOpenCallback(targetModal)) {
             //Add modal index every time a modal is opened. This can be used to determine the priority order of the modals.
             let targetModalIndex = activeModal ? parseInt(activeModal.getAttribute('data-modal-index')) + 1 : 0;
 
@@ -191,6 +184,67 @@ export default class Modal {
             //Run this when eerything's in place
             targetModal.modal.afterOpenCallback(targetModal);
         }
+    }
+
+    /**
+     * Setup custom HTML attributes for the modal.
+     * Default to setting a few aria-attributes to give more context to the browser.
+     * @param  {[type]} trigger [description]
+     * @return {[type]}         [description]
+     */
+    getCustomAttributes(targetModal) {
+        let labeledByEl = targetModal.querySelector('[data-modal-component="labeledby"]'),
+            describedByEl = targetModal.querySelector('[data-modal-component="describedby"]');
+
+        //`value`: [String | Array] If Array, index 0 is used when Toggle is unset, and index 1 is used when it's set.
+        //`trigger`: [Boolean] Set to true to only attach the attribute to the trigger element.
+        //`target`: [Boolean] Set to true to only attach the attribute to the target element.
+        return {
+            'role': {
+                value: 'dialog',
+                target: true
+            },
+            'aria-labeledby': labeledByEl ? {value: labeledByEl.id, target: true} : false,
+            'aria-describedby': describedByEl ? {value: describedByEl.id, target: true} : false,
+            'aria-modal': {
+                value: 'true',
+                target: true
+            }
+    };
+    }
+
+    /**
+     * Loop through the `targetModal.modal.options.customAttributes` object and update the configured attributes.
+     * This method is also called whenever the Modal is shown or hidden, in case the attributes should change.
+     * @param  {[type]}  modal  [description]
+     * @param  {Boolean} isActive [description]
+     * @return {[type]}           [description]
+     */
+    static updateAttributes(targetModal, isActive) {
+        let customAttributes = targetModal.modal.options.customAttributes;
+
+        for (let attrKey in customAttributes) {
+            if (customAttributes[attrKey]) {
+                if (customAttributes[attrKey].trigger) {
+                    // Modal.setAttributeValue(trigger, attrKey, customAttributes[attrKey], isActive);
+                } else if (customAttributes[attrKey].target) {
+                    Modal.setAttributeValue(targetModal.modal.content, attrKey, customAttributes[attrKey], isActive);
+                } else {
+                    // Modal.setAttributeValue(trigger, attrKey, customAttributes[attrKey], isActive);
+                    Modal.setAttributeValue(targetModal.modal.content, attrKey, customAttributes[attrKey], isActive);
+                }
+            }
+        }
+    }
+
+    /**
+     * Updates a single Toggle element with the custom attributes provided in `attrName` and `attrObject`
+     * Set the `isActive` argument to TRUE to swap the attribute value when `attrObject.value` is an Array.
+     */
+    static setAttributeValue(el, attrName, attrObject, isActive) {
+        let value = typeof attrObject.value === 'string' ? attrObject.value : (isActive ? attrObject.value[1] : attrObject.value[0]);
+
+        el.setAttribute(attrName, value);
     }
 
     /**
@@ -231,10 +285,10 @@ export default class Modal {
      */
     static updateModal(targetModal, content, newID) {
         targetModal = Modal.getModal(targetModal);
-        
+
         let targetModalContent = targetModal.querySelector('.window-modal__content');
 
-        if(targetModal.modal.beforeOpenCallback(targetModal)) {
+        if (targetModal.modal.beforeOpenCallback(targetModal)) {
             if (newID) {
                 targetModal.id = 'modal-' + newID;
             }
@@ -242,7 +296,7 @@ export default class Modal {
             if (content) {
                 targetModalContent.innerHTML = '';
 
-                Modal.insertContent(targetModalContent, content);
+                Modal.insertContent(targetModal, content);
                 Modal.insertCloseBtn(targetModalContent);
             }
 
@@ -282,11 +336,11 @@ export default class Modal {
             canClose = true,
             isCloseTarget, isCloseAllTarget, wasClick, wasEsc;
 
-        if(!targetModal) {
+        if (!targetModal) {
             return;
         }
 
-        if(typeof evt === 'object') {
+        if (typeof evt === 'object') {
             isCloseTarget = evt.target.hasAttribute('data-modal-close');
             isCloseAllTarget = evt.target.hasAttribute('data-modal-close-all');
             wasClick = evt.type === 'click' && ((evt.target === targetModal && targetModal.modal.options.allowClickOutClose) || isCloseTarget || isCloseAllTarget);
@@ -318,6 +372,14 @@ export default class Modal {
 
             if (!targetModal.modal.options.lockViewport) {
                 Modal.toggleModalScroll(targetModal);
+            }
+
+            //Optionally set the focus back to a specified `afterCloseFocusEl` element.
+            //However only focus on it if at the time of closing the modal, the user was focusing an element within the modal.
+            //This is necessary to prevent re-assigning focus when it was already intentionally shifted somewhere else.
+            //i.e. a user hits "add to cart" which closes the modal and somewhere else in the code the focus is assigned to a minicart.
+            if (targetModal.modal.options.afterCloseFocusEl && targetModal.contains(document.activeElement)) {
+                targetModal.modal.options.afterCloseFocusEl.focus();
             }
 
             //Only remove the container's modal-shown class if the current modal has no modal in background,
@@ -359,11 +421,9 @@ export default class Modal {
     //Adds modal content depending as a string or as a node.
     static insertContent(targetModal, content) {
         if (typeof content === 'string') {
-            targetModal.insertAdjacentHTML('afterbegin', content);
-        }
-
-        else if(content instanceof HTMLElement) {
-            targetModal.appendChild(content);
+            targetModal.modal.content.insertAdjacentHTML('afterbegin', content);
+        } else if (content instanceof HTMLElement) {
+            targetModal.modal.content.appendChild(content);
         }
     }
 
@@ -395,22 +455,17 @@ export default class Modal {
 
         if (matchedModal) {
             return matchedModal;
-        }
-
-        //Return itself if the 'targetModal' is an HTML element.
-        else if (targetModal instanceof HTMLElement) {
+        } else if (targetModal instanceof HTMLElement) {
+            //Return itself if the 'targetModal' is an HTML element.
             //Intentionally empty
             return targetModal;
-        }
-
-        //targetModal is not a string nor an HTMLElement, return false.
-        else {
-            // console.warn('targetModal could not be found or is not an HTMLElement');
+        } else {
+            //targetModal is not a string nor an HTMLElement, return false.
             return false;
         }
     }
 
     static getFocusableElements(targetModal) {
-     return targetModal.querySelectorAll('a, button, input:not([type="hidden"]), select, textarea');
+        return targetModal.querySelectorAll('a, button, input:not([type="hidden"]), select, textarea');
     }
 }

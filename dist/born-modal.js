@@ -8,15 +8,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _jquery = require('jquery');
-
-var _jquery2 = _interopRequireDefault(_jquery);
-
 var _bornUtilities = require('@borngroup/born-utilities');
 
 var _bodyScrollLock = require('body-scroll-lock');
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -47,12 +41,10 @@ var Modal = function () {
         //If modal doesn't exist, create it.
         if (!Modal.getModal(this.options.modalID)) {
             this._renderModal();
+        } else {
+            //Otherwise, just open it.
+            Modal.openModal(this.options.modalID);
         }
-
-        //Otherwise, just open it.
-        else {
-                Modal.openModal(this.options.modalID);
-            }
     }
 
     /**
@@ -66,16 +58,13 @@ var Modal = function () {
             var _this = this;
 
             this.modalEl = (0, _bornUtilities.createElWithAttrs)(false, { 'id': 'modal-' + this.options.modalID, 'class': this.options.modalClass, 'data-modal': true });
-            this.modalContentEl = (0, _bornUtilities.createElWithAttrs)(this.modalEl, { 'class': this._modalContentClass, 'tabindex': '-1' });
 
             this.modalEl.modal = {};
 
-            this.modalEl.modal.content = this.modalContentEl;
+            this.modalEl.modal.content = (0, _bornUtilities.createElWithAttrs)(this.modalEl, { 'class': this._modalContentClass, 'tabindex': '-1' });
             this.modalEl.modal.options = this.options;
             this.modalEl.modal.container = this.options.container;
-            // this.modalEl.modal.playVideos = this.options.playVideos || false;
-            // this.modalEl.modal.overlayOthers = this.options.overlayOthers || false;
-            // this.modalEl.modal.closeAll = this.options.closeAll || false;
+
             this.modalEl.modal.keepAlive = this.options.hasOwnProperty('keepAlive') ? this.options.keepAlive : true;
 
             //Callbacks
@@ -95,11 +84,10 @@ var Modal = function () {
             this.update = this.modalEl.modal.update = Modal.updateModal.bind(Modal, this.modalEl);
 
             if (this.options.content) {
-                Modal.insertContent(this.modalContentEl, this.options.content);
+                Modal.insertContent(this.modalEl, this.options.content);
             }
 
-            //Using jQuery append cause sometimes the HTML might contain <script> tags
-            (0, _jquery2.default)(this.options.container).append(this.modalEl);
+            this.options.container.appendChild(this.modalEl);
 
             //Checks to see if modal has been succesfully inserted in DOM before attempting to open it.
             var checkReadyTries = 0,
@@ -113,17 +101,60 @@ var Modal = function () {
                     _this.modalEl.modal.afterCreateCallback(_this.modalEl);
 
                     if (_this.options.allowCrossClose) {
-                        Modal.insertCloseBtn(_this.modalContentEl);
+                        Modal.insertCloseBtn(_this.modalEl.modal.content);
                     }
 
                     if (_this.options.openImmediately) {
                         Modal.openModal(_this.modalEl);
                     }
+
+                    _this.modalEl.modal.options.customAttributes = (0, _bornUtilities.objectAssign)(_this.getCustomAttributes(_this.modalEl), _this.modalEl.modal.options.customAttributes);
+
+                    Modal.updateAttributes(_this.modalEl);
                 } else if (checkReadyTries >= 25) {
                     clearInterval(checkReady);
                 }
             }, 10);
         }
+    }, {
+        key: 'getCustomAttributes',
+
+
+        /**
+         * Setup custom HTML attributes for the modal.
+         * Default to setting a few aria-attributes to give more context to the browser.
+         * @param  {[type]} trigger [description]
+         * @return {[type]}         [description]
+         */
+        value: function getCustomAttributes(targetModal) {
+            var labeledByEl = targetModal.querySelector('[data-modal-component="labeledby"]'),
+                describedByEl = targetModal.querySelector('[data-modal-component="describedby"]');
+
+            //`value`: [String | Array] If Array, index 0 is used when Toggle is unset, and index 1 is used when it's set.
+            //`trigger`: [Boolean] Set to true to only attach the attribute to the trigger element.
+            //`target`: [Boolean] Set to true to only attach the attribute to the target element.
+            return {
+                'role': {
+                    value: 'dialog',
+                    target: true
+                },
+                'aria-labeledby': labeledByEl ? { value: labeledByEl.id, target: true } : false,
+                'aria-describedby': describedByEl ? { value: describedByEl.id, target: true } : false,
+                'aria-modal': {
+                    value: 'true',
+                    target: true
+                }
+            };
+        }
+
+        /**
+         * Loop through the `targetModal.modal.options.customAttributes` object and update the configured attributes.
+         * This method is also called whenever the Modal is shown or hidden, in case the attributes should change.
+         * @param  {[type]}  modal  [description]
+         * @param  {Boolean} isActive [description]
+         * @return {[type]}           [description]
+         */
+
     }], [{
         key: 'setModalPosition',
         value: function setModalPosition() {
@@ -221,6 +252,37 @@ var Modal = function () {
                 targetModal.modal.afterOpenCallback(targetModal);
             }
         }
+    }, {
+        key: 'updateAttributes',
+        value: function updateAttributes(targetModal, isActive) {
+            var customAttributes = targetModal.modal.options.customAttributes;
+
+            for (var attrKey in customAttributes) {
+                if (customAttributes[attrKey]) {
+                    if (customAttributes[attrKey].trigger) {
+                        // Modal.setAttributeValue(trigger, attrKey, customAttributes[attrKey], isActive);
+                    } else if (customAttributes[attrKey].target) {
+                        Modal.setAttributeValue(targetModal.modal.content, attrKey, customAttributes[attrKey], isActive);
+                    } else {
+                        // Modal.setAttributeValue(trigger, attrKey, customAttributes[attrKey], isActive);
+                        Modal.setAttributeValue(targetModal.modal.content, attrKey, customAttributes[attrKey], isActive);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Updates a single Toggle element with the custom attributes provided in `attrName` and `attrObject`
+         * Set the `isActive` argument to TRUE to swap the attribute value when `attrObject.value` is an Array.
+         */
+
+    }, {
+        key: 'setAttributeValue',
+        value: function setAttributeValue(el, attrName, attrObject, isActive) {
+            var value = typeof attrObject.value === 'string' ? attrObject.value : isActive ? attrObject.value[1] : attrObject.value[0];
+
+            el.setAttribute(attrName, value);
+        }
 
         /**
          * Sets up a focus trap when a modal is open.
@@ -280,7 +342,7 @@ var Modal = function () {
                 if (content) {
                     targetModalContent.innerHTML = '';
 
-                    Modal.insertContent(targetModalContent, content);
+                    Modal.insertContent(targetModal, content);
                     Modal.insertCloseBtn(targetModalContent);
                 }
 
@@ -370,6 +432,14 @@ var Modal = function () {
                     Modal.toggleModalScroll(targetModal);
                 }
 
+                //Optionally set the focus back to a specified `afterCloseFocusEl` element.
+                //However only focus on it if at the time of closing the modal, the user was focusing an element within the modal.
+                //This is necessary to prevent re-assigning focus when it was already intentionally shifted somewhere else.
+                //i.e. a user hits "add to cart" which closes the modal and somewhere else in the code the focus is assigned to a minicart.
+                if (targetModal.modal.options.afterCloseFocusEl && targetModal.contains(document.activeElement)) {
+                    targetModal.modal.options.afterCloseFocusEl.focus();
+                }
+
                 //Only remove the container's modal-shown class if the current modal has no modal in background,
                 //or if the current modal's container is different than the background modal's.
                 if (!targetModal.modal.modalInBackground || targetModal.modal.modalInBackground.modal.container !== targetModal.modal.container) {
@@ -416,9 +486,9 @@ var Modal = function () {
         key: 'insertContent',
         value: function insertContent(targetModal, content) {
             if (typeof content === 'string') {
-                targetModal.insertAdjacentHTML('afterbegin', content);
+                targetModal.modal.content.insertAdjacentHTML('afterbegin', content);
             } else if (content instanceof HTMLElement) {
-                targetModal.appendChild(content);
+                targetModal.modal.content.appendChild(content);
             }
         }
 
@@ -459,19 +529,14 @@ var Modal = function () {
 
             if (matchedModal) {
                 return matchedModal;
-            }
-
-            //Return itself if the 'targetModal' is an HTML element.
-            else if (targetModal instanceof HTMLElement) {
-                    //Intentionally empty
-                    return targetModal;
-                }
-
+            } else if (targetModal instanceof HTMLElement) {
+                //Return itself if the 'targetModal' is an HTML element.
+                //Intentionally empty
+                return targetModal;
+            } else {
                 //targetModal is not a string nor an HTMLElement, return false.
-                else {
-                        // console.warn('targetModal could not be found or is not an HTMLElement');
-                        return false;
-                    }
+                return false;
+            }
         }
     }, {
         key: 'getFocusableElements',
