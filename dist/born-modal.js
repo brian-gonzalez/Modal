@@ -127,7 +127,7 @@ var Modal = function () {
          * @return {[type]}         [description]
          */
         value: function getCustomAttributes(targetModal) {
-            var labeledByEl = targetModal.querySelector('[data-modal-component="labeledby"]'),
+            var labelledByEl = targetModal.querySelector('[data-modal-component="labelledby"]'),
                 describedByEl = targetModal.querySelector('[data-modal-component="describedby"]');
 
             //`value`: [String | Array] If Array, index 0 is used when Toggle is unset, and index 1 is used when it's set.
@@ -138,7 +138,7 @@ var Modal = function () {
                     value: 'dialog',
                     target: true
                 },
-                'aria-labeledby': labeledByEl ? { value: labeledByEl.id, target: true } : false,
+                'aria-labelledby': labelledByEl ? { value: labelledByEl.id, target: true } : false,
                 'aria-describedby': describedByEl ? { value: describedByEl.id, target: true } : false,
                 'aria-modal': {
                     value: 'true',

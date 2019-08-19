@@ -140,7 +140,7 @@ define(['exports', '@borngroup/born-utilities', 'body-scroll-lock'], function (e
         }, {
             key: 'getCustomAttributes',
             value: function getCustomAttributes(targetModal) {
-                var labeledByEl = targetModal.querySelector('[data-modal-component="labeledby"]'),
+                var labelledByEl = targetModal.querySelector('[data-modal-component="labelledby"]'),
                     describedByEl = targetModal.querySelector('[data-modal-component="describedby"]');
 
                 //`value`: [String | Array] If Array, index 0 is used when Toggle is unset, and index 1 is used when it's set.
@@ -151,7 +151,7 @@ define(['exports', '@borngroup/born-utilities', 'body-scroll-lock'], function (e
                         value: 'dialog',
                         target: true
                     },
-                    'aria-labeledby': labeledByEl ? { value: labeledByEl.id, target: true } : false,
+                    'aria-labelledby': labelledByEl ? { value: labelledByEl.id, target: true } : false,
                     'aria-describedby': describedByEl ? { value: describedByEl.id, target: true } : false,
                     'aria-modal': {
                         value: 'true',

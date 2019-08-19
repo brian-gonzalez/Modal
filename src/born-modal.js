@@ -193,7 +193,7 @@ export default class Modal {
      * @return {[type]}         [description]
      */
     getCustomAttributes(targetModal) {
-        let labeledByEl = targetModal.querySelector('[data-modal-component="labeledby"]'),
+        let labelledByEl = targetModal.querySelector('[data-modal-component="labelledby"]'),
             describedByEl = targetModal.querySelector('[data-modal-component="describedby"]');
 
         //`value`: [String | Array] If Array, index 0 is used when Toggle is unset, and index 1 is used when it's set.
@@ -204,7 +204,7 @@ export default class Modal {
                 value: 'dialog',
                 target: true
             },
-            'aria-labeledby': labeledByEl ? {value: labeledByEl.id, target: true} : false,
+            'aria-labelledby': labelledByEl ? {value: labelledByEl.id, target: true} : false,
             'aria-describedby': describedByEl ? {value: describedByEl.id, target: true} : false,
             'aria-modal': {
                 value: 'true',
