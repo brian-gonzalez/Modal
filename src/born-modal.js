@@ -73,10 +73,8 @@ export default class Modal {
                 if (Modal.getModal(this.options.modalID)) {
                     clearInterval(checkReady);
 
-                    this.modalEl.modal.afterCreateCallback(this.modalEl);
-
                     if (this.options.allowCrossClose) {
-                        Modal.insertCloseBtn(this.modalEl.modal.content);
+                        Modal.insertCloseBtn(this.modalEl);
                     }
 
                     if (this.options.openImmediately) {
@@ -86,6 +84,8 @@ export default class Modal {
                     this.modalEl.modal.options.customAttributes = objectAssign(this.getCustomAttributes(this.modalEl), this.modalEl.modal.options.customAttributes);
 
                     Modal.updateAttributes(this.modalEl);
+
+                    this.modalEl.modal.afterCreateCallback(this.modalEl);
                 }
 
                 else if (checkReadyTries >= 25) {
@@ -286,18 +286,21 @@ export default class Modal {
     static updateModal(targetModal, content, newID) {
         targetModal = Modal.getModal(targetModal);
 
-        let targetModalContent = targetModal.querySelector('.window-modal__content');
-
         if (targetModal.modal.beforeOpenCallback(targetModal)) {
             if (newID) {
                 targetModal.id = 'modal-' + newID;
             }
 
             if (content) {
+                let targetModalContent = targetModal.querySelector('.window-modal__content');
+
                 targetModalContent.innerHTML = '';
 
                 Modal.insertContent(targetModal, content);
-                Modal.insertCloseBtn(targetModalContent);
+
+                if (targetModal.modal.options.allowCrossClose) {
+                    Modal.insertCloseBtn(targetModal);
+                }
             }
 
             //Run this when everything's in place
@@ -415,7 +418,9 @@ export default class Modal {
 
     //Inserts close button into modal
     static insertCloseBtn(targetModal) {
-        return createElWithAttrs(targetModal, {'class': 'window-modal__close', 'data-modal-close': true, 'title': 'Close'}, 'button');
+        let closeBtnContainer = targetModal.modal.options.crossCloseContainer === 'modal' ? targetModal : targetModal.modal.content;
+
+        return createElWithAttrs(closeBtnContainer, {'class': 'window-modal__close', 'data-modal-close': true, 'title': 'Close modal', 'aria-label': 'Close modal', 'type': 'button'}, 'button');
     }
 
     //Adds modal content depending as a string or as a node.

@@ -98,10 +98,8 @@ var Modal = function () {
                 if (Modal.getModal(_this.options.modalID)) {
                     clearInterval(checkReady);
 
-                    _this.modalEl.modal.afterCreateCallback(_this.modalEl);
-
                     if (_this.options.allowCrossClose) {
-                        Modal.insertCloseBtn(_this.modalEl.modal.content);
+                        Modal.insertCloseBtn(_this.modalEl);
                     }
 
                     if (_this.options.openImmediately) {
@@ -111,6 +109,8 @@ var Modal = function () {
                     _this.modalEl.modal.options.customAttributes = (0, _bornUtilities.objectAssign)(_this.getCustomAttributes(_this.modalEl), _this.modalEl.modal.options.customAttributes);
 
                     Modal.updateAttributes(_this.modalEl);
+
+                    _this.modalEl.modal.afterCreateCallback(_this.modalEl);
                 } else if (checkReadyTries >= 25) {
                     clearInterval(checkReady);
                 }
@@ -332,18 +332,21 @@ var Modal = function () {
         value: function updateModal(targetModal, content, newID) {
             targetModal = Modal.getModal(targetModal);
 
-            var targetModalContent = targetModal.querySelector('.window-modal__content');
-
             if (targetModal.modal.beforeOpenCallback(targetModal)) {
                 if (newID) {
                     targetModal.id = 'modal-' + newID;
                 }
 
                 if (content) {
+                    var targetModalContent = targetModal.querySelector('.window-modal__content');
+
                     targetModalContent.innerHTML = '';
 
                     Modal.insertContent(targetModal, content);
-                    Modal.insertCloseBtn(targetModalContent);
+
+                    if (targetModal.modal.options.allowCrossClose) {
+                        Modal.insertCloseBtn(targetModal);
+                    }
                 }
 
                 //Run this when everything's in place
@@ -477,7 +480,9 @@ var Modal = function () {
     }, {
         key: 'insertCloseBtn',
         value: function insertCloseBtn(targetModal) {
-            return (0, _bornUtilities.createElWithAttrs)(targetModal, { 'class': 'window-modal__close', 'data-modal-close': true, 'title': 'Close' }, 'button');
+            var closeBtnContainer = targetModal.modal.options.crossCloseContainer === 'modal' ? targetModal : targetModal.modal.content;
+
+            return (0, _bornUtilities.createElWithAttrs)(closeBtnContainer, { 'class': 'window-modal__close', 'data-modal-close': true, 'title': 'Close modal', 'aria-label': 'Close modal', 'type': 'button' }, 'button');
         }
 
         //Adds modal content depending as a string or as a node.
