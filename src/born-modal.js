@@ -1,4 +1,4 @@
-import {createElWithAttrs, whichTransition, objectAssign} from '@borngroup/born-utilities';
+import {createElWithAttrs, whichTransition, objectAssign, focusTrap} from '@borngroup/born-utilities';
 import {disableBodyScroll, enableBodyScroll, clearAllBodyScrollLocks} from 'body-scroll-lock';
 
 export default class Modal {
@@ -135,7 +135,7 @@ export default class Modal {
             this.modal.container.classList.add('modal-shown');
         }
 
-        Modal.setFocusTrap(this);
+        Modal.focusModal(this);
 
         this.removeEventListener(whichTransition(), Modal.setModalShown);
     }
@@ -251,33 +251,11 @@ export default class Modal {
      * Sets up a focus trap when a modal is open.
      * @param {[type]} targetModal [description]
      */
-    static setFocusTrap(targetModal) {
-        targetModal.modal.focusable = {};
-        targetModal.modal.focusable.list = Modal.getFocusableElements(targetModal);
-        targetModal.modal.focusable.first = targetModal.modal.focusable.list[0];
-        targetModal.modal.focusable.last = targetModal.modal.focusable.list[targetModal.modal.focusable.list.length - 1];
-
+    static focusModal(targetModal) {
         targetModal.modal.content.focus();
         targetModal.modal.content.style.outline = 'none';
 
-        targetModal.modal.focusable.first.addEventListener('keydown', Modal.loopFocusableNode);
-        targetModal.modal.focusable.last.addEventListener('keydown', Modal.loopFocusableNode);
-    }
-
-    /**
-     * Detect wether the currently focused element is first or last within the modal.
-     * Then redirects the focus to the first or last element, depending on the user's tab action.
-     */
-    static loopFocusableNode(evt) {
-        let focusableObject = this.closest('[data-modal]').modal.focusable,
-            isFocusableLast = focusableObject.last === this,
-            focusableTarget = focusableObject[isFocusableLast ? 'first' : 'last'];
-
-        if (evt.keyCode === 9 && (isFocusableLast && !evt.shiftKey || !isFocusableLast && evt.shiftKey)) {
-            evt.preventDefault();
-
-            focusableTarget.focus();
-        }
+        focusTrap(targetModal);
     }
 
     /**
@@ -468,9 +446,5 @@ export default class Modal {
             //targetModal is not a string nor an HTMLElement, return false.
             return false;
         }
-    }
-
-    static getFocusableElements(targetModal) {
-        return targetModal.querySelectorAll('a, button, input:not([type="hidden"]), select, textarea');
     }
 }

@@ -203,7 +203,7 @@ define(['exports', '@borngroup/born-utilities', 'body-scroll-lock'], function (e
                     this.modal.container.classList.add('modal-shown');
                 }
 
-                Modal.setFocusTrap(this);
+                Modal.focusModal(this);
 
                 this.removeEventListener((0, _bornUtilities.whichTransition)(), Modal.setModalShown);
             }
@@ -276,31 +276,12 @@ define(['exports', '@borngroup/born-utilities', 'body-scroll-lock'], function (e
                 el.setAttribute(attrName, value);
             }
         }, {
-            key: 'setFocusTrap',
-            value: function setFocusTrap(targetModal) {
-                targetModal.modal.focusable = {};
-                targetModal.modal.focusable.list = Modal.getFocusableElements(targetModal);
-                targetModal.modal.focusable.first = targetModal.modal.focusable.list[0];
-                targetModal.modal.focusable.last = targetModal.modal.focusable.list[targetModal.modal.focusable.list.length - 1];
-
+            key: 'focusModal',
+            value: function focusModal(targetModal) {
                 targetModal.modal.content.focus();
                 targetModal.modal.content.style.outline = 'none';
 
-                targetModal.modal.focusable.first.addEventListener('keydown', Modal.loopFocusableNode);
-                targetModal.modal.focusable.last.addEventListener('keydown', Modal.loopFocusableNode);
-            }
-        }, {
-            key: 'loopFocusableNode',
-            value: function loopFocusableNode(evt) {
-                var focusableObject = this.closest('[data-modal]').modal.focusable,
-                    isFocusableLast = focusableObject.last === this,
-                    focusableTarget = focusableObject[isFocusableLast ? 'first' : 'last'];
-
-                if (evt.keyCode === 9 && (isFocusableLast && !evt.shiftKey || !isFocusableLast && evt.shiftKey)) {
-                    evt.preventDefault();
-
-                    focusableTarget.focus();
-                }
+                (0, _bornUtilities.focusTrap)(targetModal);
             }
         }, {
             key: 'updateModal',
@@ -476,11 +457,6 @@ define(['exports', '@borngroup/born-utilities', 'body-scroll-lock'], function (e
                     //targetModal is not a string nor an HTMLElement, return false.
                     return false;
                 }
-            }
-        }, {
-            key: 'getFocusableElements',
-            value: function getFocusableElements(targetModal) {
-                return targetModal.querySelectorAll('a, button, input:not([type="hidden"]), select, textarea');
             }
         }]);
 
