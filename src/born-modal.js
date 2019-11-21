@@ -52,8 +52,7 @@ export default class Modal {
         this.modalEl.modal.beforeCloseCallback = this.options.beforeCloseCallback || function() { return true; };
         this.modalEl.modal.afterCloseCallback = this.options.afterCloseCallback || function() {};
         this.modalEl.modal.afterCreateCallback  = this.options.afterCreateCallback  || function() {};
-        this.modalEl.modal.afterScrollLockCallback  = this.options.afterScrollLockCallback  || function() {};
-
+        
         //Methods
         this.open   = this.modalEl.modal.open   = Modal.openModal.bind(Modal, this.modalEl);
         this.close  = this.modalEl.modal.close  = Modal.closeModal;
@@ -118,8 +117,6 @@ export default class Modal {
         toggleBodyScroll(targetModal, scrollOptions);
         //This is a hacky way to force a browser repaint because for some reason they need this.
         targetModal.scrollHeight;
-
-        targetModal.modal.afterScrollLockCallback(targetModal);
     }
 
     static setModalShown() {
