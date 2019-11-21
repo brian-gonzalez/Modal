@@ -77,6 +77,7 @@ var Modal = function () {
             };
             this.modalEl.modal.afterCloseCallback = this.options.afterCloseCallback || function () {};
             this.modalEl.modal.afterCreateCallback = this.options.afterCreateCallback || function () {};
+            this.modalEl.modal.afterScrollLockCallback = this.options.afterScrollLockCallback || function () {};
 
             //Methods
             this.open = this.modalEl.modal.open = Modal.openModal.bind(Modal, this.modalEl);
@@ -180,6 +181,8 @@ var Modal = function () {
             toggleBodyScroll(targetModal, scrollOptions);
             //This is a hacky way to force a browser repaint because for some reason they need this.
             targetModal.scrollHeight;
+
+            targetModal.modal.afterScrollLockCallback(targetModal);
         }
     }, {
         key: 'setModalShown',
