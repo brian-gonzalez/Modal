@@ -129,10 +129,12 @@ export default class Modal {
         //Only add these classes/states if the modal is active.
         //This prevents locking the viewport when user promptly closes modal before it's done animating.
         if (this.classList.contains('modal-active')) {
-            if (this.modal.options.lockViewport) {
-                document.documentElement.classList.add('cancel-scroll');
-            } else {
-                Modal.toggleModalScroll(this, true);
+            if (!this.modal.options.allowScrolling) {
+                if (this.modal.options.lockViewport) {
+                    document.documentElement.classList.add('cancel-scroll');
+                } else {
+                    Modal.toggleModalScroll(this, true);
+                }
             }
 
             this.modal.container.classList.add('modal-shown');
