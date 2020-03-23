@@ -161,6 +161,13 @@ var Modal = function () {
         value: function setModalPosition() {
             Modal.positionTop = Math.abs(document.body.getBoundingClientRect().top);
         }
+
+        /**
+         * @param  {HTMLElement} targetModal [description]
+         * @param  {Boolean} disable     When `disable` is TRUE, the body scrolling will be disabled.
+         *                               Leave empty or set to FALSE to allow body scrolling.
+         */
+
     }, {
         key: 'toggleModalScroll',
         value: function toggleModalScroll(targetModal, disable) {
@@ -411,6 +418,8 @@ var Modal = function () {
                 targetModal.classList.remove('modal-active');
                 Modal.toggleVideo(targetModal, 'pause');
 
+                //Remove scroll-locking from the current modal.
+                //It will be re-set in the backgrounded modals, if any.
                 if (!targetModal.modal.options.lockViewport) {
                     Modal.toggleModalScroll(targetModal);
                 }
@@ -431,8 +440,8 @@ var Modal = function () {
 
                 //Remove the modal-in-background class from the backgrounded modal if it exists.
                 if (targetModal.modal.modalInBackground) {
-                    //Reset the scroll locking on backgrounded modals if they did not have the `lockViewport` option.
-                    if (!targetModal.modal.modalInBackground.modal.options.lockViewport) {
+                    //Re-set the scroll locking on backgrounded modals if they did not have the `lockViewport` option.
+                    if (!targetModal.modal.modalInBackground.modal.options.lockViewport && !targetModal.modal.modalInBackground.modal.options.allowScrolling) {
                         Modal.toggleModalScroll(targetModal.modal.modalInBackground, true);
                     }
 

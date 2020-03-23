@@ -375,6 +375,8 @@ define(['exports', '@borngroup/born-utilities', 'body-scroll-lock'], function (e
                     targetModal.classList.remove('modal-active');
                     Modal.toggleVideo(targetModal, 'pause');
 
+                    //Remove scroll-locking from the current modal.
+                    //It will be re-set in the backgrounded modals, if any.
                     if (!targetModal.modal.options.lockViewport) {
                         Modal.toggleModalScroll(targetModal);
                     }
@@ -395,8 +397,8 @@ define(['exports', '@borngroup/born-utilities', 'body-scroll-lock'], function (e
 
                     //Remove the modal-in-background class from the backgrounded modal if it exists.
                     if (targetModal.modal.modalInBackground) {
-                        //Reset the scroll locking on backgrounded modals if they did not have the `lockViewport` option.
-                        if (!targetModal.modal.modalInBackground.modal.options.lockViewport) {
+                        //Re-set the scroll locking on backgrounded modals if they did not have the `lockViewport` option.
+                        if (!targetModal.modal.modalInBackground.modal.options.lockViewport && !targetModal.modal.modalInBackground.modal.options.allowScrolling) {
                             Modal.toggleModalScroll(targetModal.modal.modalInBackground, true);
                         }
 
