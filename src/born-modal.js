@@ -133,7 +133,7 @@ export default class Modal {
 
         //Only add these classes/states if the modal is active.
         //This prevents locking the viewport when user promptly closes modal before it's done animating.
-        if (this.classList.contains('modal-active')) {
+        if (this.hasAttribute('data-modal-active')) {
             if (!this.modal.options.allowScrolling) {
                 if (this.modal.options.lockViewport) {
                     document.documentElement.classList.add('cancel-scroll');
@@ -159,7 +159,10 @@ export default class Modal {
 
         targetModal = Modal.getModal(targetModal);
 
-        if (targetModal.modal.beforeOpenCallback(targetModal)) {
+        //Do not process `openModal` any further if the targetModal is already open.
+        if (targetModal === activeModal) {
+            return false;
+        } else if (targetModal.modal.beforeOpenCallback(targetModal)) {
             //Add modal index every time a modal is opened. This can be used to determine the priority order of the modals.
             let targetModalIndex = activeModal ? parseInt(activeModal.getAttribute('data-modal-index')) + 1 : 0;
 
@@ -181,6 +184,7 @@ export default class Modal {
             }
 
             targetModal.classList.add('modal-active');
+            targetModal.setAttribute('data-modal-active', true);
 
             targetModal.addEventListener(whichTransition(), Modal.setModalShown);
 
@@ -359,6 +363,7 @@ export default class Modal {
             }
 
             targetModal.classList.remove('modal-active');
+            targetModal.removeAttribute('data-modal-active');
             Modal.toggleVideo(targetModal, 'pause');
 
             //Remove scroll-locking from the current modal.
@@ -427,7 +432,7 @@ export default class Modal {
      * @return {NodeList}
      */
     static getActiveModals() {
-        return document.querySelectorAll('.window-modal.modal-active');
+        return document.querySelectorAll('.window-modal[data-modal-active]');
     }
 
     /**

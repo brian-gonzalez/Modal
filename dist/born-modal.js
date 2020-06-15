@@ -199,7 +199,7 @@ var Modal = function () {
 
             //Only add these classes/states if the modal is active.
             //This prevents locking the viewport when user promptly closes modal before it's done animating.
-            if (this.classList.contains('modal-active')) {
+            if (this.hasAttribute('data-modal-active')) {
                 if (!this.modal.options.allowScrolling) {
                     if (this.modal.options.lockViewport) {
                         document.documentElement.classList.add('cancel-scroll');
@@ -228,7 +228,10 @@ var Modal = function () {
 
             targetModal = Modal.getModal(targetModal);
 
-            if (targetModal.modal.beforeOpenCallback(targetModal)) {
+            //Do not process `openModal` any further if the targetModal is already open.
+            if (targetModal === activeModal) {
+                return false;
+            } else if (targetModal.modal.beforeOpenCallback(targetModal)) {
                 //Add modal index every time a modal is opened. This can be used to determine the priority order of the modals.
                 var targetModalIndex = activeModal ? parseInt(activeModal.getAttribute('data-modal-index')) + 1 : 0;
 
@@ -250,6 +253,7 @@ var Modal = function () {
                 }
 
                 targetModal.classList.add('modal-active');
+                targetModal.setAttribute('data-modal-active', true);
 
                 targetModal.addEventListener((0, _bornUtilities.whichTransition)(), Modal.setModalShown);
 
@@ -416,6 +420,7 @@ var Modal = function () {
                 }
 
                 targetModal.classList.remove('modal-active');
+                targetModal.removeAttribute('data-modal-active');
                 Modal.toggleVideo(targetModal, 'pause');
 
                 //Remove scroll-locking from the current modal.
@@ -494,7 +499,7 @@ var Modal = function () {
     }, {
         key: 'getActiveModals',
         value: function getActiveModals() {
-            return document.querySelectorAll('.window-modal.modal-active');
+            return document.querySelectorAll('.window-modal[data-modal-active]');
         }
 
         /**
