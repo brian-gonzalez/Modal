@@ -213,6 +213,14 @@ export default class Modal {
         //`value`: [String | Array] If Array, index 0 is used when Toggle is unset, and index 1 is used when it's set.
         //`trigger`: [Boolean] Set to true to only attach the attribute to the trigger element.
         //`target`: [Boolean] Set to true to only attach the attribute to the target element.
+        if (labelledByEl && !labelledByEl.id){
+            labelledByEl.id ='ID_' + Math.floor(new Date().getTime() * Math.random()).toString();
+        }
+
+        if (describedByEl && !describedByEl.id){
+            describedByEl.id = 'ID_' + Math.floor(new Date().getTime() * Math.random()).toString();
+        }
+
         return {
             'role': {
                 value: 'dialog',
