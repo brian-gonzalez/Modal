@@ -361,7 +361,7 @@ define(['exports', '@borngroup/born-utilities', 'body-scroll-lock'], function (e
                     isCloseTarget = evt.target.hasAttribute('data-modal-close');
                     isCloseAllTarget = evt.target.hasAttribute('data-modal-close-all');
                     wasClick = evt.type === 'click' && (evt.target === targetModal && targetModal.modal.options.allowClickOutClose || isCloseTarget || isCloseAllTarget);
-                    wasEsc = document.activeElement.tagName !== 'INPUT' && evt.keyCode === 27;
+                    wasEsc = document.activeElement.tagName !== 'INPUT' && evt.keyCode === 27 && targetModal.modal.options.allowEscClose;
 
                     canClose = wasClick || wasEsc;
                 }
