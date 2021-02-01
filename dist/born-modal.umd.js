@@ -1,4 +1,16 @@
-define(["exports", "@borngroup/born-utilities", "body-scroll-lock"], function (_exports, _bornUtilities, _bodyScrollLock) {
+(function (global, factory) {
+  if (typeof define === "function" && define.amd) {
+    define(["exports", "@borngroup/born-utilities", "body-scroll-lock"], factory);
+  } else if (typeof exports !== "undefined") {
+    factory(exports, require("@borngroup/born-utilities"), require("body-scroll-lock"));
+  } else {
+    var mod = {
+      exports: {}
+    };
+    factory(mod.exports, global.bornUtilities, global.bodyScrollLock);
+    global.bornModal = mod.exports;
+  }
+})(typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : this, function (_exports, _bornUtilities, _bodyScrollLock) {
   "use strict";
 
   Object.defineProperty(_exports, "__esModule", {
