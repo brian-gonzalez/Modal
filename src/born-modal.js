@@ -12,6 +12,7 @@ export default class Modal {
         this.options.allowEscClose = this.options.hasOwnProperty('allowEscClose') ? this.options.allowEscClose : true;
         this.options.allowClickOutClose = this.options.hasOwnProperty('allowClickOutClose') ? this.options.allowClickOutClose : true;
         this.options.allowCrossClose = this.options.hasOwnProperty('allowCrossClose') ? this.options.allowCrossClose : true;
+        this.options.resetScrollPositionOnClose = this.options.hasOwnProperty('resetScrollPositionOnClose') ? this.options.resetScrollPositionOnClose : true;
 
         this._modalContentClass = 'window-modal__content';
 
@@ -363,7 +364,10 @@ export default class Modal {
             if (activeModals.length <= 1) {
                 document.body.removeEventListener('keydown', Modal.closeModal);
                 document.documentElement.classList.remove('cancel-scroll');
-                window.scrollTo(0, Modal.positionTop || 0);
+
+                if (targetModal.modal.options.resetScrollPositionOnClose) {
+                    window.scrollTo(0, Modal.positionTop || 0);
+                }
             } else if (targetModal.modal.options.closeAll || isCloseAllTarget) {
                 //If user clicked on an element with `data-modal-close-all`,
                 //or if the modal being closed has the `closeAll` option, close all remaining modals.
