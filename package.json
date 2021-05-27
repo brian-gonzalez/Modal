@@ -1,6 +1,6 @@
 {
   "name": "@borngroup/born-modal",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "BORN Module to handle Modals. Provides callbacks and static methods to open, update, and close the modals",
   "main": "dist/born-modal.min.js",
   "scripts": {
