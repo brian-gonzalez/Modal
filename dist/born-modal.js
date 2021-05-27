@@ -482,6 +482,8 @@ var Modal = /*#__PURE__*/function () {
       } else if (content instanceof HTMLElement) {
         targetModal.modal.content.appendChild(content);
       }
+
+      (0, _bornUtilities.parseScripts)(targetModal);
     }
     /**
      * Gets all the currently active modals.

@@ -1,4 +1,4 @@
-import {createElWithAttrs, whichTransition, objectAssign, focusTrap} from '@borngroup/born-utilities';
+import {createElWithAttrs, whichTransition, objectAssign, focusTrap, parseScripts} from '@borngroup/born-utilities';
 import {disableBodyScroll, enableBodyScroll, clearAllBodyScrollLocks} from 'body-scroll-lock';
 
 export default class Modal {
@@ -438,6 +438,8 @@ export default class Modal {
         } else if (content instanceof HTMLElement) {
             targetModal.modal.content.appendChild(content);
         }
+
+        parseScripts(targetModal);
     }
 
     /**
