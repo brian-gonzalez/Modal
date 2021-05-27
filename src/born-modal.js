@@ -178,7 +178,7 @@ export default class Modal {
                 activeModal.classList.add('modal-in-background');
             }
 
-            targetModal.addEventListener('click', Modal.closeModal);
+            targetModal.addEventListener('mousedown', Modal.closeModal);
 
             if (targetModal.modal.options.allowEscClose) {
                 document.body.addEventListener('keydown', Modal.closeModal);
@@ -338,19 +338,20 @@ export default class Modal {
     static closeModal(evt, ignoreBeforeCallback) {
         let targetModal = Modal.getActiveModal(),
             canClose = true,
-            isCloseTarget, isCloseAllTarget, wasClick, wasEsc;
+            isCloseTarget, isCloseAllTarget, evtIsEscKey, evtIsClick, allowClickClose;
 
         if (!targetModal) {
             return;
         }
 
         if (typeof evt === 'object') {
-            isCloseTarget = evt.target.hasAttribute('data-modal-close');
-            isCloseAllTarget = evt.target.hasAttribute('data-modal-close-all');
-            wasClick = evt.type === 'click' && ((evt.target === targetModal && targetModal.modal.options.allowClickOutClose) || isCloseTarget || isCloseAllTarget);
-            wasEsc   = document.activeElement.tagName !== 'INPUT' && evt.keyCode === 27 && targetModal.modal.options.allowEscClose;
+            isCloseTarget = evt.target.closest('[data-modal-close]');
+            isCloseAllTarget = evt.target.closest('[data-modal-close-all]');
+            evtIsClick = evt.type === 'click' || evt.type === 'mousedown' || evt.type === 'mouseup';
+            allowClickClose = evtIsClick && ((evt.target === targetModal && targetModal.modal.options.allowClickOutClose) || isCloseTarget || isCloseAllTarget);
+            evtIsEscKey = document.activeElement.tagName !== 'INPUT' && evt.keyCode === 27 && targetModal.modal.options.allowEscClose;
 
-            canClose = wasClick || wasEsc;
+            canClose = allowClickClose || evtIsEscKey;
         }
 
         //Check beforeCloseCallback before attempting to close the modal.
@@ -358,7 +359,7 @@ export default class Modal {
         if (canClose && (ignoreBeforeCallback || targetModal.modal.beforeCloseCallback(targetModal))) {
             let activeModals = Modal.getActiveModals();
 
-            targetModal.removeEventListener('click', Modal.closeModal);
+            targetModal.removeEventListener('mousedown', Modal.closeModal);
 
             //Only remove listeners and class if there is 1 modal or less left.
             if (activeModals.length <= 1) {

@@ -253,7 +253,7 @@ var Modal = /*#__PURE__*/function () {
           activeModal.classList.add('modal-in-background');
         }
 
-        targetModal.addEventListener('click', Modal.closeModal);
+        targetModal.addEventListener('mousedown', Modal.closeModal);
 
         if (targetModal.modal.options.allowEscClose) {
           document.body.addEventListener('keydown', Modal.closeModal);
@@ -377,26 +377,28 @@ var Modal = /*#__PURE__*/function () {
           canClose = true,
           isCloseTarget,
           isCloseAllTarget,
-          wasClick,
-          wasEsc;
+          evtIsEscKey,
+          evtIsClick,
+          allowClickClose;
 
       if (!targetModal) {
         return;
       }
 
       if (_typeof(evt) === 'object') {
-        isCloseTarget = evt.target.hasAttribute('data-modal-close');
-        isCloseAllTarget = evt.target.hasAttribute('data-modal-close-all');
-        wasClick = evt.type === 'click' && (evt.target === targetModal && targetModal.modal.options.allowClickOutClose || isCloseTarget || isCloseAllTarget);
-        wasEsc = document.activeElement.tagName !== 'INPUT' && evt.keyCode === 27 && targetModal.modal.options.allowEscClose;
-        canClose = wasClick || wasEsc;
+        isCloseTarget = evt.target.closest('[data-modal-close]');
+        isCloseAllTarget = evt.target.closest('[data-modal-close-all]');
+        evtIsClick = evt.type === 'click' || evt.type === 'mousedown' || evt.type === 'mouseup';
+        allowClickClose = evtIsClick && (evt.target === targetModal && targetModal.modal.options.allowClickOutClose || isCloseTarget || isCloseAllTarget);
+        evtIsEscKey = document.activeElement.tagName !== 'INPUT' && evt.keyCode === 27 && targetModal.modal.options.allowEscClose;
+        canClose = allowClickClose || evtIsEscKey;
       } //Check beforeCloseCallback before attempting to close the modal.
       //If ignoreBeforeCallback is provided, ignore beforeCloseCallback.
 
 
       if (canClose && (ignoreBeforeCallback || targetModal.modal.beforeCloseCallback(targetModal))) {
         var activeModals = Modal.getActiveModals();
-        targetModal.removeEventListener('click', Modal.closeModal); //Only remove listeners and class if there is 1 modal or less left.
+        targetModal.removeEventListener('mousedown', Modal.closeModal); //Only remove listeners and class if there is 1 modal or less left.
 
         if (activeModals.length <= 1) {
           document.body.removeEventListener('keydown', Modal.closeModal);
