@@ -253,16 +253,9 @@ var Modal = /*#__PURE__*/function () {
           activeModal.classList.add('modal-in-background');
         }
 
-        targetModal.addEventListener('mousedown', Modal.closeModal);
-
-        if (targetModal.modal.options.allowEscClose) {
-          document.body.addEventListener('keydown', Modal.closeModal);
-        }
-
         targetModal.classList.add('modal-active');
         targetModal.setAttribute('data-modal-active', true);
-        targetModal.addEventListener((0, _bornUtilities.whichTransition)(), Modal.setModalShown);
-        Modal.toggleVideo(targetModal, 'play'); //If option is specified, closes the modal after `timeOut`.
+        Modal.setupEventListeners(targetModal); //If option is specified, closes the modal after `timeOut`.
 
         if (targetModal.modal.options.timeOut) {
           window.setTimeout(Modal.closeModal, targetModal.modal.options.timeOut);
@@ -271,6 +264,29 @@ var Modal = /*#__PURE__*/function () {
 
         targetModal.modal.afterOpenCallback(targetModal);
       }
+    }
+  }, {
+    key: "setupEventListeners",
+    value: function setupEventListeners(targetModal) {
+      targetModal.addEventListener('mousedown', Modal.storeLastEvent);
+      targetModal.addEventListener('click', Modal.closeModal);
+      targetModal.addEventListener('mouseup', Modal.closeModal);
+
+      if (targetModal.modal.options.allowEscClose) {
+        document.body.addEventListener('keydown', Modal.closeModal);
+      }
+
+      targetModal.addEventListener((0, _bornUtilities.whichTransition)(), Modal.setModalShown);
+    }
+    /**
+     * Store the last "mousedown" event data so that it can later be retrieved and compared with the "mouseup" event data.
+     * This prevents closing the modal too early when using a "mousedown" listener only.
+     */
+
+  }, {
+    key: "storeLastEvent",
+    value: function storeLastEvent(evt) {
+      this.modal.lastEvent = evt;
     }
   }, {
     key: "updateAttributes",
@@ -342,17 +358,6 @@ var Modal = /*#__PURE__*/function () {
       }
     }
     /**
-     * If a video is found within the modal, run the 'action' provided.
-     */
-
-  }, {
-    key: "toggleVideo",
-    value: function toggleVideo(targetModal, action) {
-      if (targetModal.modal.options.playVideos && targetModal.querySelector('video')) {
-        targetModal.querySelector('video')[action]();
-      }
-    }
-    /**
      * Loops through active modals and closes them all.
      * @return {[type]} [description]
      */
@@ -375,30 +380,29 @@ var Modal = /*#__PURE__*/function () {
     value: function closeModal(evt, ignoreBeforeCallback) {
       var targetModal = Modal.getActiveModal(),
           canClose = true,
-          isCloseTarget,
           isCloseAllTarget,
-          evtIsEscKey,
-          evtIsClick,
-          allowClickClose;
+          isCloseTarget;
 
       if (!targetModal) {
         return;
       }
 
       if (_typeof(evt) === 'object') {
-        isCloseTarget = evt.target.closest('[data-modal-close]');
-        isCloseAllTarget = evt.target.closest('[data-modal-close-all]');
-        evtIsClick = evt.type === 'click' || evt.type === 'mousedown' || evt.type === 'mouseup';
-        allowClickClose = evtIsClick && (evt.target === targetModal && targetModal.modal.options.allowClickOutClose || isCloseTarget || isCloseAllTarget);
-        evtIsEscKey = document.activeElement.tagName !== 'INPUT' && evt.keyCode === 27 && targetModal.modal.options.allowEscClose;
-        canClose = allowClickClose || evtIsEscKey;
+        //1000% sure make sure the user intended to specifically click on the overlay.
+        //A "lastEvent" property is stored when "mousedown" happens, which we then use here to compare with the new event target.
+        var isOverlayTarget = targetModal.modal.options.allowClickOutClose && evt.type === 'mouseup' && evt.target === targetModal && targetModal.modal.lastEvent.target === targetModal && evt.button === 0,
+            evtIsClick = evt.type === 'click',
+            evtIsEscKey = document.activeElement.tagName !== 'INPUT' && evt.keyCode === 27 && targetModal.modal.options.allowEscClose,
+            _isCloseTarget = evtIsClick && evt.target.closest('[data-modal-close]');
+
+        isCloseAllTarget = evtIsClick && evt.target.closest('[data-modal-close-all]');
+        canClose = isOverlayTarget || _isCloseTarget || isCloseAllTarget || evtIsEscKey;
       } //Check beforeCloseCallback before attempting to close the modal.
       //If ignoreBeforeCallback is provided, ignore beforeCloseCallback.
 
 
       if (canClose && (ignoreBeforeCallback || targetModal.modal.beforeCloseCallback(targetModal))) {
-        var activeModals = Modal.getActiveModals();
-        targetModal.removeEventListener('mousedown', Modal.closeModal); //Only remove listeners and class if there is 1 modal or less left.
+        var activeModals = Modal.getActiveModals(); //Only remove listeners and class if there is 1 modal or less left.
 
         if (activeModals.length <= 1) {
           document.body.removeEventListener('keydown', Modal.closeModal);
@@ -414,8 +418,7 @@ var Modal = /*#__PURE__*/function () {
         }
 
         targetModal.classList.remove('modal-active');
-        targetModal.removeAttribute('data-modal-active');
-        Modal.toggleVideo(targetModal, 'pause'); //Remove scroll-locking from the current modal.
+        targetModal.removeAttribute('data-modal-active'); //Remove scroll-locking from the current modal.
         //It will be re-set in the backgrounded modals, if any.
 
         if (!targetModal.modal.options.lockViewport) {
