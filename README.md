@@ -1,4 +1,4 @@
-# BORN Modal #
+# Modaly #
 
 Very simple module to create modals on the fly. Features callbacks and open/update/close methods.
 
